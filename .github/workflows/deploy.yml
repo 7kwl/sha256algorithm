@@ -7,42 +7,17 @@ permissions:
   pages: write
   id-token: write
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "16"
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-      - name: Build
-        run: |
-          echo "检查项目结构..."
-          ls -la
-          echo "开始构建..."
-          npm run build
-          echo "构建完成，检查输出..."
-          ls -la
-        env:
-          CI: false
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # 如果构建后生成build目录，使用./build
-          # 如果构建后生成dist目录，使用./dist
-          # 如果使用public目录直接部署，使用./public
-          path: ./public  # 根据实际情况调整
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
+          path: ./public  # 直接使用public目录
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
