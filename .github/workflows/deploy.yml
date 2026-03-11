@@ -15,15 +15,37 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "16"
           cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
-      - name: Build
-        run: npm run build
+      - name: Debug - Show environment
+        run: |
+          echo "Node.js版本:"
+          node --version
+          echo "npm版本:"
+          npm --version
+          echo "当前目录:"
+          pwd
+          ls -la
+      - name: Install dependencies with debug
+        run: |
+          echo "开始安装依赖..."
+          npm install --legacy-peer-deps --verbose
+          echo "依赖安装完成"
+      - name: Build with error capture
+        run: |
+          echo "开始构建..."
+          set +e  # 不立即退出，允许捕获错误
+          npm run build 2>&1 | tee build.log
+          BUILD_EXIT_CODE=$?
+          echo "构建退出代码: $BUILD_EXIT_CODE"
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "构建失败，查看错误日志:"
+            cat build.log
+            exit 1
+          fi
+          echo "构建成功"
         env:
           CI: false
-          NODE_OPTIONS: "--max-old-space-size=4096"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
