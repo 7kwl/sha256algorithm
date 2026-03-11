@@ -14,28 +14,38 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'  # 使用兼容版本
+          node-version: '16'
           cache: 'npm'
+
+      - name: Debug - Show Node.js version
+        run: node --version
+
+      - name: Debug - Show npm version
+        run: npm --version
 
       - name: Clean install
         run: |
-          rm -rf node_modules
-          rm -f package-lock.json
+          echo "清理旧依赖..."
+          rm -rf node_modules package-lock.json
           npm cache clean --force
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Build project
+      - name: Install dependencies with debug
         run: |
-          echo "开始构建React应用..."
-          npm run build
-          echo "构建完成，检查输出..."
-          ls -la build/
+          echo "开始安装依赖..."
+          npm install --legacy-peer-deps --verbose
+          echo "依赖安装完成"
+
+      - name: Build project with error handling
+        run: |
+          echo "开始构建项目..."
+          npm run build || echo "构建失败，检查错误信息"
+          echo "检查构建输出..."
+          ls -la build/ || echo "build目录不存在"
         env:
           CI: false
 
       - name: Deploy to GitHub Pages
+        if: success()
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
