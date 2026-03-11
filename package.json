@@ -1,6 +1,6 @@
 {
   "name": "sha",
-  "homepage": "https://7kwl.github.io/sha256algorithm",
+  "homepage": "https://sha256.zh-i.com/sha256algorithm",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
