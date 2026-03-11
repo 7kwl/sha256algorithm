@@ -1,6 +1,6 @@
 {
   "name": "sha",
-  "homepage": "https://sha256.zh-i.com/sha256algorithm",
+  "homepage": "https://sha256.zh-i.com",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
