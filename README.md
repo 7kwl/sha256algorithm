@@ -21,3 +21,5 @@ I built this using create-react-app. If you want to play with it, just install j
 and start local server:
 
 `npm start`
+访问地址：http://sha256.zh-i.com/sha256algorithm/
+原地址：https://7kwl.github.io/sha256algorithm/
