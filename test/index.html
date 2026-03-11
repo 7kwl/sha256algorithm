@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHA256加密过程演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-indigo-800 mb-2">SHA256加密过程演示</h1>
+            <p class="text-gray-600">可视化展示SHA256哈希算法的加密过程</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 输入区域 -->
+            <div class="bg-white rounded-2xl shadow-xl p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-key mr-2 text-indigo-600"></i>输入数据
+                </h2>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="inputText">请输入要加密的文本：</label>
+                    <textarea 
+                        id="inputText" 
+                        class="w-full h-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        placeholder="在此输入任意文本..."
+                    ></textarea>
+                </div>
+                <button 
+                    id="encryptBtn" 
+                    class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                >
+                    <i class="fas fa-lock mr-2"></i>执行SHA256加密
+                </button>
+            </div>
+
+            <!-- 输出区域 -->
+            <div class="bg-white rounded-2xl shadow-xl p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-shield-alt mr-2 text-green-600"></i>加密结果
+                </h2>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">SHA256哈希值：</label>
+                    <div id="hashResult" class="w-full h-32 px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg overflow-x-auto font-mono text-sm flex items-center">
+                        <span class="text-gray-400">点击加密按钮查看结果</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">二进制表示：</label>
+                        <div id="binaryResult" class="h-24 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg overflow-y-auto text-xs font-mono"></div>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">十六进制表示：</label>
+                        <div id="hexResult" class="h-24 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg overflow-y-auto text-xs font-mono"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 算法说明 -->
+        <div class="mt-12 bg-white rounded-2xl shadow-xl p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-info-circle mr-2 text-blue-600"></i>SHA256算法说明
+            </h2>
+            <div class="prose max-w-none">
+                <p class="text-gray-700 mb-3">
+                    SHA256（Secure Hash Algorithm 256-bit）是SHA-2系列密码学哈希函数中的一种，
+                    由美国国家安全局（NSA）设计，能将任意长度的数据转换为固定长度的256位（32字节）哈希值。
+                </p>
+                <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">主要特点：</h3>
+                <ul class="list-disc pl-5 text-gray-700 space-y-1">
+                    <li>输出固定长度：256位（64个十六进制字符）</li>
+                    <li>单向性：无法从哈希值反推原始数据</li>
+                    <li>雪崩效应：输入微小变化导致输出剧烈变化</li>
+                    <li>抗碰撞性：难以找到两个不同输入产生相同输出</li>
+                </ul>
+                <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">应用场景：</h3>
+                <ul class="list-disc pl-5 text-gray-700 space-y-1">
+                    <li>密码存储验证</li>
+                    <li>数字签名</li>
+                    <li>区块链技术</li>
+                    <li>文件完整性校验</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 编码展示 -->
+        <div class="mt-8 bg-white rounded-2xl shadow-xl p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-code mr-2 text-yellow-600"></i>编码方式展示
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-hashtag mr-2 text-indigo-600"></i>十六进制编码
+                    </h3>
+                    <p class="text-gray-600 text-sm mb-3">最常见的表示方式，将每4位二进制转换为1个十六进制字符</p>
+                    <div id="hexDisplay" class="font-mono text-sm bg-gray-50 p-3 rounded break-words"></div>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-binary mr-2 text-green-600"></i>二进制编码
+                    </h3>
+                    <p class="text-gray-600 text-sm mb-3">直接显示256位二进制数据，展示最原始的哈希值</p>
+                    <div id="binaryDisplay" class="font-mono text-xs bg-gray-50 p-3 rounded break-words max-h-32 overflow-y-auto"></div>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-barcode mr-2 text-red-600"></i>Base64编码
+                    </h3>
+                    <p class="text-gray-600 text-sm mb-3">将二进制数据转换为ASCII字符，便于文本传输</p>
+                    <div id="base64Display" class="font-mono text-sm bg-gray-50 p-3 rounded break-words"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputText = document.getElementById('inputText');
+            const encryptBtn = document.getElementById('encryptBtn');
+            const hashResult = document.getElementById('hashResult');
+            const binaryResult = document.getElementById('binaryResult');
+            const hexResult = document.getElementById('hexResult');
+            const hexDisplay = document.getElementById('hexDisplay');
+            const binaryDisplay = document.getElementById('binaryDisplay');
+            const base64Display = document.getElementById('base64Display');
+
+            // 默认示例文本
+            inputText.value = "Hello, SHA256!";
+
+            encryptBtn.addEventListener('click', function() {
+                const text = inputText.value;
+                if (!text) {
+                    alert('请输入要加密的文本');
+                    return;
+                }
+
+                try {
+                    // 使用CryptoJS计算SHA256
+                    const hash = CryptoJS.SHA256(text).toString();
+                    
+                    // 显示十六进制哈希值
+                    hashResult.innerHTML = `<span class="text-green-600">${hash}</span>`;
+                    
+                    // 转换为二进制
+                    const binary = hexToBinary(hash);
+                    binaryResult.textContent = formatBinary(binary);
+                    hexResult.textContent = formatHex(hash);
+                    
+                    // 显示不同编码方式
+                    hexDisplay.textContent = hash;
+                    binaryDisplay.textContent = binary;
+                    base64Display.textContent = hexToBase64(hash);
+                } catch (error) {
+                    hashResult.innerHTML = `<span class="text-red-500">加密出错: ${error.message}</span>`;
+                }
+            });
+
+            // 十六进制转二进制
+            function hexToBinary(hex) {
+                return hex.split('').map(char => 
+                    parseInt(char, 16).toString(2).padStart(4, '0')
+                ).join('');
+            }
+
+            // 格式化二进制显示
+            function formatBinary(binary) {
+                return binary.match(/.{1,8}/g).join(' ');
+            }
+
+            // 格式化十六进制显示
+            function formatHex(hex) {
+                return hex.match(/.{1,8}/g).join(' ');
+            }
+
+            // 十六进制转Base64
+            function hexToBase64(hex) {
+                const bytes = [];
+                for (let i = 0; i < hex.length; i += 2) {
+                    bytes.push(parseInt(hex.substr(i, 2), 16));
+                }
+                return btoa(String.fromCharCode.apply(null, bytes));
+            }
+
+            // 页面加载时自动执行一次
+            encryptBtn.click();
+        });
+    </script>
+</body>
+</html>
