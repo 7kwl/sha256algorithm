@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHA256 加密过程逐步骤演示</title>
+    <!-- 此代码由豆包AI所写2026.03.12 -->
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Consolas', 'Monaco', '微软雅黑', monospace;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+            line-height: 1.8;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+            font-size: 32px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+        }
+        
+        .input-section {
+            margin-bottom: 40px;
+            padding: 25px;
+            background: #f5f9ff;
+            border-radius: 8px;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        #inputText {
+            flex: 1;
+            padding: 12px 18px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        #inputText:focus {
+            border-color: #3498db;
+        }
+        
+        #encryptBtn {
+            padding: 12px 30px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        #encryptBtn:hover {
+            background: #2980b9;
+        }
+        
+        .steps-section {
+            margin-top: 30px;
+        }
+        
+        .step-card {
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .step-header {
+            background: #3498db;
+            color: white;
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .step-content {
+            padding: 25px;
+            background: white;
+            display: none;
+        }
+        
+        .step-content.active {
+            display: block;
+        }
+        
+        .step-content pre {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .step-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .step-content th, .step-content td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .step-content th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+        
+        .highlight {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .final-result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e8f4fd;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .final-result h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .final-hash {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e74c3c;
+            letter-spacing: 2px;
+        }
+        
+        .toggle-icon {
+            font-size: 20px;
+            transition: transform 0.3s;
+        }
+        
+        .toggle-icon.active {
+            transform: rotate(180deg);
+        }
+        
+        .rounds-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+            border: 1px solid #eee;
+            border-radius: 6px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            #encryptBtn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SHA256 加密过程逐步骤演示</h1>
+        
+        <!-- 输入区域 -->
+        <div class="input-section">
+            <div class="input-group">
+                <input type="text" id="inputText" placeholder="请输入要加密的文本（例如：hello world）" value="hello world">
+                <button id="encryptBtn">开始加密演示</button>
+            </div>
+            <p>提示：输入任意文本后点击按钮，下方会展示完整的 SHA256 加密过程，点击每个步骤标题可展开/收起详细内容。</p>
+        </div>
+        
+        <!-- 步骤展示区域 -->
+        <div class="steps-section">
+            <!-- 步骤1：原始数据处理 -->
+            <div class="step-card">
+                <div class="step-header" onclick="toggleStep('step1')">
+                    <span>步骤1：原始数据预处理（转二进制 + 长度计算）</span>
+                    <span class="toggle-icon" id="icon1">▼</span>
+                </div>
+                <div class="step-content" id="step1">
+                    <div id="step1Content"></div>
+                </div>
+            </div>
+            
+            <!-- 步骤2：消息填充 -->
+            <div class="step-card">
+                <div class="step-header" onclick="toggleStep('step2')">
+                    <span>步骤2：消息填充（SHA256 标准填充规则）</span>
+                    <span class="toggle-icon" id="icon2">▼</span>
+                </div>
+                <div class="step-content" id="step2">
+                    <div id="step2Content"></div>
+                </div>
+            </div>
+            
+            <!-- 步骤3：初始哈希值初始化 -->
+            <div class="step-card">
+                <div class="step-header" onclick="toggleStep('step3')">
+                    <span>步骤3：初始化8个初始哈希值（H0-H7）</span>
+                    <span class="toggle-icon" id="icon3">▼</span>
+                </div>
+                <div class="step-content" id="step3">
+                    <div id="step3Content"></div>
+                </div>
+            </div>
+            
+            <!-- 步骤4：常量定义 -->
+            <div class="step-card">
+                <div class="step-header" onclick="toggleStep('step4')">
+                    <span>步骤4：初始化64个加密常量（K0-K63）</span>
+                    <span class="toggle-icon" id="icon4">▼</span>
+                </div>
+                <div class="step-content" id="step4">
+                    <div id="step4Content"></div>
+                </div>
+            </div>
+            
+            <!-- 步骤5：消息扩展 -->
+            <div class="step-card">
+                <div class="step-header" onclick="toggleStep('step5')">
+                    <span>步骤5：消息扩展（生成64个32位字 W0-W63）</span>
+                    <span class="toggle-icon" id="icon5">▼</span>
+                </div>
+                <div class="step-content" id="step5">
+                    <div id="step5Content"></div>
+                </div>
+            </div>
+            
+            <!-- 步骤6：压缩函数运算 -->
+            <div class="step-card">
+                <div class="step-header" onclick="toggleStep('step6')">
+                    <span>步骤6：64轮压缩函数运算（核心加密过程）</span>
+                    <span class="toggle-icon" id="icon6">▼</span>
+                </div>
+                <div class="step-content" id="step6">
+                    <div id="step6Content"></div>
+                </div>
+            </div>
+            
+            <!-- 步骤7：最终哈希值生成 -->
+            <div class="step-card">
+                <div class="step-header" onclick="toggleStep('step7')">
+                    <span>步骤7：最终哈希值拼接（结果输出）</span>
+                    <span class="toggle-icon" id="icon7">▼</span>
+                </div>
+                <div class="step-content" id="step7">
+                    <div id="step7Content"></div>
+                </div>
+            </div>
+            
+            <!-- 最终结果 -->
+            <div class="final-result">
+                <h3>SHA256 最终加密结果</h3>
+                <div class="final-hash" id="finalHash">请点击上方按钮开始加密演示</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // SHA256 核心常量
+        const K = [
+            0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+            0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+            0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+            0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+            0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+            0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+            0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+            0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+        ];
+
+        // 初始哈希值（前8个素数的平方根的小数部分前32位）
+        const initialHash = [
+            0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+            0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+        ];
+
+        // 工具函数：将字符串转为二进制
+        function stringToBinary(str) {
+            let binary = '';
+            for (let i = 0; i < str.length; i++) {
+                const bin = str.charCodeAt(i).toString(2).padStart(8, '0');
+                binary += bin;
+            }
+            return binary;
+        }
+
+        // 工具函数：32位循环右移
+        function rotr(n, d) {
+            return ((n >>> d) | (n << (32 - d))) >>> 0;
+        }
+
+        // SHA256 核心函数
+        function sha256Functions(a, b, c, d, e, f, g, h, w, k) {
+            const S1 = (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) >>> 0;
+            const ch = ((e & f) ^ (~e & g)) >>> 0;
+            const temp1 = (h + S1 + ch + k + w) >>> 0;
+            const S0 = (rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) >>> 0;
+            const maj = ((a & b) ^ (a & c) ^ (b & c)) >>> 0;
+            const temp2 = (S0 + maj) >>> 0;
+            
+            return {
+                newH: g,
+                newG: f,
+                newF: e,
+                newE: (d + temp1) >>> 0,
+                newD: c,
+                newC: b,
+                newB: a,
+                newA: (temp1 + temp2) >>> 0,
+                temp1,
+                temp2,
+                S0,
+                S1,
+                ch,
+                maj
+            };
+        }
+
+        // 步骤切换函数
+        function toggleStep(stepId) {
+            const content = document.getElementById(stepId);
+            const icon = document.getElementById(`icon${stepId.replace('step', '')}`);
+            content.classList.toggle('active');
+            icon.classList.toggle('active');
+            icon.textContent = content.classList.contains('active') ? '▲' : '▼';
+        }
+
+        // 格式化数字为8位十六进制
+        function toHex8(n) {
+            return n.toString(16).padStart(8, '0').toLowerCase();
+        }
+
+        // 格式化数字为32位二进制
+        function toBin32(n) {
+            return (n >>> 0).toString(2).padStart(32, '0');
+        }
+
+        // 主加密函数
+        function sha256Demo() {
+            const inputText = document.getElementById('inputText').value.trim();
+            if (!inputText) {
+                alert('请输入要加密的文本！');
+                return;
+            }
+
+            // 步骤1：原始数据处理
+            const originalBinary = stringToBinary(inputText);
+            const originalLength = originalBinary.length;
+            let step1HTML = `
+                <p>原始输入文本：<strong>${inputText}</strong></p>
+                <p>文本转ASCII二进制（每个字符8位）：</p>
+                <pre>${originalBinary} (长度：${originalLength} 位)</pre>
+                <p>原始数据长度：${originalLength} 位 (${originalLength / 8} 字节)</p>
+            `;
+            document.getElementById('step1Content').innerHTML = step1HTML;
+            toggleStep('step1'); // 自动展开
+
+            // 步骤2：消息填充
+            let paddedBinary = originalBinary + '1';
+            while ((paddedBinary.length % 512) !== 448) {
+                paddedBinary += '0';
+            }
+            const length64 = originalLength.toString(2).padStart(64, '0');
+            paddedBinary += length64;
+            
+            let step2HTML = `
+                <p>第一步填充：在原始二进制后添加一个 '1' → ${originalBinary}1</p>
+                <p>第二步填充：添加0，直到长度模512等于448 → 填充了 ${paddedBinary.length - originalLength - 1} 个0</p>
+                <p>第三步填充：添加原始长度的64位二进制表示 → ${length64}</p>
+                <p>填充后的总长度：<span class="highlight">${paddedBinary.length}</span> 位 (${paddedBinary.length / 512} 个512位块)</p>
+                <p>填充后的完整二进制（前100位）：</p>
+                <pre>${paddedBinary.substring(0, 100)}... (总长度 ${paddedBinary.length} 位)</pre>
+            `;
+            document.getElementById('step2Content').innerHTML = step2HTML;
+            toggleStep('step2');
+
+            // 步骤3：初始哈希值
+            let step3HTML = `
+                <p>SHA256 初始哈希值（基于前8个素数的平方根）：</p>
+                <table>
+                    <tr>
+                        <th>变量</th><th>十六进制值</th><th>十进制值</th>
+                    </tr>
+            `;
+            initialHash.forEach((val, idx) => {
+                step3HTML += `
+                    <tr>
+                        <td>H${idx}</td>
+                        <td class="highlight">${toHex8(val)}</td>
+                        <td>${val}</td>
+                    </tr>
+                `;
+            });
+            step3HTML += `</table>`;
+            document.getElementById('step3Content').innerHTML = step3HTML;
+            toggleStep('step3');
+
+            // 步骤4：加密常量
+            let step4HTML = `
+                <p>SHA256 64个加密常量（基于前64个素数的立方根）：</p>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <tr>
+                            <th>K0-K7</th><th>K8-K15</th><th>K16-K23</th><th>K24-K31</th>
+                        </tr>
+                        <tr>
+                            <td>${K.slice(0,8).map(toHex8).join('<br>')}</td>
+                            <td>${K.slice(8,16).map(toHex8).join('<br>')}</td>
+                            <td>${K.slice(16,24).map(toHex8).join('<br>')}</td>
+                            <td>${K.slice(24,32).map(toHex8).join('<br>')}</td>
+                        </tr>
+                        <tr>
+                            <th>K32-K39</th><th>K40-K47</th><th>K48-K55</th><th>K56-K63</th>
+                        </tr>
+                        <tr>
+                            <td>${K.slice(32,40).map(toHex8).join('<br>')}</td>
+                            <td>${K.slice(40,48).map(toHex8).join('<br>')}</td>
+                            <td>${K.slice(48,56).map(toHex8).join('<br>')}</td>
+                            <td>${K.slice(56,64).map(toHex8).join('<br>')}</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+            document.getElementById('step4Content').innerHTML = step4HTML;
+
+            // 步骤5：消息扩展
+            const blocks = [];
+            for (let i = 0; i < paddedBinary.length; i += 512) {
+                blocks.push(paddedBinary.substring(i, i + 512));
+            }
+
+            let W = [];
+            const block = blocks[0]; // 处理第一个512位块（演示用）
+            for (let t = 0; t < 64; t++) {
+                if (t < 16) {
+                    // 前16个W值直接从消息块分割
+                    const start = t * 32;
+                    const end = start + 32;
+                    const bin32 = block.substring(start, end) || '0'.repeat(32);
+                    W[t] = parseInt(bin32, 2) >>> 0;
+                } else {
+                    // 消息扩展公式
+                    const s0 = (rotr(W[t-15], 7) ^ rotr(W[t-15], 18) ^ (W[t-15] >>> 3)) >>> 0;
+                    const s1 = (rotr(W[t-2], 17) ^ rotr(W[t-2], 19) ^ (W[t-2] >>> 10)) >>> 0;
+                    W[t] = (W[t-16] + s0 + W[t-7] + s1) >>> 0;
+                }
+            }
+
+            let step5HTML = `
+                <p>将512位消息块分割为16个32位字（W0-W15）：</p>
+                <pre>W0-W15: ${W.slice(0,16).map(toHex8).join(', ')} (十六进制)</pre>
+                <p>通过扩展公式生成W16-W63（共64个32位字）：</p>
+                <p>扩展公式：W[t] = (W[t-16] + σ0(W[t-15]) + W[t-7] + σ1(W[t-2])) mod 2³²</p>
+                <p>其中：σ0(x) = ROTR⁷(x) ⊕ ROTR¹⁸(x) ⊕ SHR³(x)</p>
+                <p>      σ1(x) = ROTR¹⁷(x) ⊕ ROTR¹⁹(x) ⊕ SHR¹⁰(x)</p>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <tr>
+                            <th>W16-W23</th><th>W24-W31</th><th>W32-W39</th><th>W40-W47</th>
+                        </tr>
+                        <tr>
+                            <td>${W.slice(16,24).map(toHex8).join('<br>')}</td>
+                            <td>${W.slice(24,32).map(toHex8).join('<br>')}</td>
+                            <td>${W.slice(32,40).map(toHex8).join('<br>')}</td>
+                            <td>${W.slice(40,48).map(toHex8).join('<br>')}</td>
+                        </tr>
+                        <tr>
+                            <th>W48-W55</th><th>W56-W63</th><th colspan="2">扩展完成（共64个32位字）</th>
+                        </tr>
+                        <tr>
+                            <td>${W.slice(48,56).map(toHex8).join('<br>')}</td>
+                            <td>${W.slice(56,64).map(toHex8).join('<br>')}</td>
+                            <td colspan="2">所有W值均为32位无符号整数</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+            document.getElementById('step5Content').innerHTML = step5HTML;
+            toggleStep('step5');
+
+            // 步骤6：64轮压缩函数运算
+            let a = initialHash[0], b = initialHash[1], c = initialHash[2], d = initialHash[3];
+            let e = initialHash[4], f = initialHash[5], g = initialHash[6], h = initialHash[7];
+            
+            let roundsHTML = `
+                <p>初始化工作变量：a=${toHex8(a)}, b=${toHex8(b)}, c=${toHex8(c)}, d=${toHex8(d)}, e=${toHex8(e)}, f=${toHex8(f)}, g=${toHex8(g)}, h=${toHex8(h)}</p>
+                <p>64轮压缩函数运算（每轮更新工作变量）：</p>
+                <div class="rounds-container">
+                    <table>
+                        <tr>
+                            <th>轮次</th><th>W[t]</th><th>K[t]</th><th>temp1</th><th>temp2</th><th>新a</th><th>新e</th>
+                        </tr>
+            `;
+
+            // 记录每轮运算结果（演示关键轮次，完整64轮会过长）
+            for (let t = 0; t < 64; t++) {
+                const res = sha256Functions(a, b, c, d, e, f, g, h, W[t], K[t]);
+                
+                // 更新工作变量
+                h = res.newH; g = res.newG; f = res.newF; e = res.newE;
+                d = res.newD; c = res.newC; b = res.newB; a = res.newA;
+
+                // 只显示关键轮次（1,8,16,32,48,64），避免表格过长
+                if (t === 0 || t === 7 || t === 15 || t === 31 || t === 47 || t === 63) {
+                    roundsHTML += `
+                        <tr>
+                            <td>${t+1}</td>
+                            <td>${toHex8(W[t])}</td>
+                            <td>${toHex8(K[t])}</td>
+                            <td>${toHex8(res.temp1)}</td>
+                            <td>${toHex8(res.temp2)}</td>
+                            <td class="highlight">${toHex8(a)}</td>
+                            <td class="highlight">${toHex8(e)}</td>
+                        </tr>
+                    `;
+                }
+            }
+
+            roundsHTML += `
+                    </table>
+                    <p>注：以上仅展示关键轮次，完整运算共64轮，每轮都按相同公式更新工作变量</p>
+                </div>
+            `;
+            document.getElementById('step6Content').innerHTML = roundsHTML;
+            toggleStep('step6');
+
+            // 步骤7：最终哈希值生成
+            let hash = [
+                (initialHash[0] + a) >>> 0,
+                (initialHash[1] + b) >>> 0,
+                (initialHash[2] + c) >>> 0,
+                (initialHash[3] + d) >>> 0,
+                (initialHash[4] + e) >>> 0,
+                (initialHash[5] + f) >>> 0,
+                (initialHash[6] + g) >>> 0,
+                (initialHash[7] + h) >>> 0
+            ];
+
+            const finalHash = hash.map(toHex8).join('');
+            
+            let step7HTML = `
+                <p>将初始哈希值与压缩后的工作变量相加（mod 2³²）：</p>
+                <table>
+                    <tr>
+                        <th>初始值</th><th>压缩后值</th><th>相加结果</th>
+                    </tr>
+            `;
+            for (let i = 0; i < 8; i++) {
+                step7HTML += `
+                    <tr>
+                        <td>${toHex8(initialHash[i])}</td>
+                        <td>${toHex8([a,b,c,d,e,f,g,h][i])}</td>
+                        <td class="highlight">${toHex8(hash[i])}</td>
+                    </tr>
+                `;
+            }
+            step7HTML += `
+                </table>
+                <p>拼接8个32位哈希值（共256位）：</p>
+                <pre>${hash.map(toHex8).join('')}</pre>
+                <p>最终SHA256哈希值（小写）：<span class="highlight">${finalHash}</span></p>
+            `;
+            document.getElementById('step7Content').innerHTML = step7HTML;
+            toggleStep('step7');
+
+            // 显示最终结果
+            document.getElementById('finalHash').textContent = finalHash;
+        }
+
+        // 绑定按钮事件
+        document.getElementById('encryptBtn').addEventListener('click', sha256Demo);
+
+        // 页面加载时默认展开前3步
+        window.onload = function() {
+            toggleStep('step1');
+            toggleStep('step2');
+            toggleStep('step3');
+        };
+    </script>
+</body>
+</html>

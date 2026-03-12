@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHA256加密过程演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        .bit-display {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+        .step-highlight {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 8px;
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl font-bold text-gray-800 mb-3">SHA256加密过程演示</h1>
+            <p class="text-gray-600">可视化展示SHA256哈希算法的详细计算步骤</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- 输入区域 -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-key mr-2 text-blue-500"></i>输入数据
+                </h2>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">输入文本：</label>
+                    <textarea 
+                        id="inputText" 
+                        class="w-full h-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="在此输入要加密的文本..."
+                    >Hello, SHA256!</textarea>
+                </div>
+                <div class="flex space-x-3">
+                    <button 
+                        id="encryptBtn" 
+                        class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg font-medium transition"
+                    >
+                        <i class="fas fa-lock mr-2"></i>执行加密
+                    </button>
+                    <button 
+                        id="resetBtn" 
+                        class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-medium transition"
+                    >
+                        <i class="fas fa-redo mr-2"></i>重置
+                    </button>
+                </div>
+            </div>
+
+            <!-- 输出区域 -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-shield-alt mr-2 text-green-500"></i>加密结果
+                </h2>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">SHA256哈希值：</label>
+                    <div id="hashResult" class="w-full h-20 px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg overflow-x-auto font-mono text-sm flex items-center">
+                        <span class="text-gray-400">点击"执行加密"查看结果</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">十六进制：</label>
+                        <div id="hexResult" class="h-16 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg overflow-y-auto text-xs font-mono"></div>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">二进制长度：</label>
+                        <div id="binaryLength" class="h-16 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg flex items-center justify-center">
+                            <span class="text-gray-400">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 计算过程展示 -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                <i class="fas fa-cogs mr-2 text-purple-500"></i>计算过程
+            </h2>
+            <div class="space-y-4">
+                <div id="step1" class="step-highlight">
+                    <h3 class="font-medium text-gray-800">步骤1: 消息预处理</h3>
+                    <div id="preprocessDetails" class="text-sm text-gray-600 mt-1">等待计算...</div>
+                </div>
+                <div id="step2" class="step-highlight">
+                    <h3 class="font-medium text-gray-800">步骤2: 消息调度</h3>
+                    <div id="scheduleDetails" class="text-sm text-gray-600 mt-1">等待计算...</div>
+                </div>
+                <div id="step3" class="step-highlight">
+                    <h3 class="font-medium text-gray-800">步骤3: 压缩函数计算</h3>
+                    <div id="compressionDetails" class="text-sm text-gray-600 mt-1">等待计算...</div>
+                </div>
+                <div id="step4" class="step-highlight">
+                    <h3 class="font-medium text-gray-800">步骤4: 最终哈希值</h3>
+                    <div id="finalHashDetails" class="text-sm text-gray-600 mt-1">等待计算...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 工作变量展示 -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                <i class="fas fa-calculator mr-2 text-orange-500"></i>工作变量状态
+            </h2>
+            <div id="workingVars" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- 工作变量将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // SHA256常量定义
+        const K = [
+            0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
+            0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+            0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+            0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+            0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
+            0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+            0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
+            0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+            0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+            0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+            0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
+            0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+            0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
+            0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+            0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+            0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+        ];
+
+        // 初始哈希值
+        const H = [
+            0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+            0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+        ];
+
+        // 右旋转函数
+        function rightRotate(x, n) {
+            return (x >>> n) | (x << (32 - n));
+        }
+
+        // 消息预处理
+        function preprocessMessage(message) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(message);
+            const bitLength = data.length * 8;
+            
+            // 添加1和填充0
+            const padded = new Uint8Array(Math.ceil((data.length + 9) / 64) * 64);
+            padded.set(data);
+            padded[data.length] = 0x80;
+            
+            // 添加长度
+            const view = new DataView(padded.buffer);
+            view.setUint32(padded.length - 4, Math.floor(bitLength / 0x100000000));
+            view.setUint32(padded.length - 8, bitLength >>> 0);
+            
+            return padded;
+        }
+
+        // 执行SHA256计算
+        function calculateSHA256(message) {
+            const padded = preprocessMessage(message);
+            const blocks = padded.length / 64;
+            
+            // 显示预处理信息
+            document.getElementById('preprocessDetails').innerHTML = `
+                原始消息: "${message}"<br>
+                消息长度: ${message.length} 字符 (${message.length * 8} bits)<br>
+                填充后长度: ${padded.length} 字节 (${padded.length * 8} bits)<br>
+                数据块数: ${blocks}
+            `;
+            
+            let hash = [...H];
+            
+            // 处理每个512位块
+            for (let i = 0; i < blocks; i++) {
+                const block = padded.slice(i * 64, (i + 1) * 64);
+                const words = new Array(64);
+                
+                // 初始化前16个字
+                for (let j = 0; j < 16; j++) {
+                    words[j] = (
+                        (block[j * 4] << 24) |
+                        (block[j * 4 + 1] << 16) |
+                        (block[j * 4 + 2] << 8) |
+                        block[j * 4 + 3]
+                    ) >>> 0;
+                }
+                
+                // 扩展消息
+                for (let j = 16; j < 64; j++) {
+                    const s0 = rightRotate(words[j-15], 7) ^ rightRotate(words[j-15], 18) ^ (words[j-15] >>> 3);
+                    const s1 = rightRotate(words[j-2], 17) ^ rightRotate(words[j-2], 19) ^ (words[j-2] >>> 10);
+                    words[j] = (words[j-16] + s0 + words[j-7] + s1) >>> 0;
+                }
+                
+                // 显示消息调度信息
+                if (i === 0) {
+                    document.getElementById('scheduleDetails').innerHTML = `
+                        第一个数据块的前16个字:<br>
+                        ${words.slice(0, 16).map((w, idx) => 
+                            `w${idx}: 0x${w.toString(16).padStart(8, '0')}`
+                        ).join('<br>')}
+                    `;
+                }
+                
+                // 初始化工作变量
+                let [a, b, c, d, e, f, g, h] = hash;
+                
+                // 主循环
+                for (let j = 0; j < 64; j++) {
+                    const S1 = rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25);
+                    const ch = (e & f) ^ ((~e) & g);
+                    const temp1 = (h + S1 + ch + K[j] + words[j]) >>> 0;
+                    const S0 = rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22);
+                    const maj = (a & b) ^ (a & c) ^ (b & c);
+                    const temp2 = (S0 + maj) >>> 0;
+                    
+                    h = g;
+                    g = f;
+                    f = e;
+                    e = (d + temp1) >>> 0;
+                    d = c;
+                    c = b;
+                    b = a;
+                    a = (temp1 + temp2) >>> 0;
+                }
+                
+                // 更新哈希值
+                hash[0] = (hash[0] + a) >>> 0;
+                hash[1] = (hash[1] + b) >>> 0;
+                hash[2] = (hash[2] + c) >>> 0;
+                hash[3] = (hash[3] + d) >>> 0;
+                hash[4] = (hash[4] + e) >>> 0;
+                hash[5] = (hash[5] + f) >>> 0;
+                hash[6] = (hash[6] + g) >>> 0;
+                hash[7] = (hash[7] + h) >>> 0;
+            }
+            
+            // 显示压缩函数信息
+            document.getElementById('compressionDetails').innerHTML = `
+                完成64轮压缩函数计算<br>
+                最终哈希值由8个32位字组成
+            `;
+            
+            // 生成最终哈希值
+            const finalHash = hash.map(h => h.toString(16).padStart(8, '0')).join('');
+            
+            // 显示最终哈希信息
+            document.getElementById('finalHashDetails').innerHTML = `
+                最终哈希值: ${finalHash}<br>
+                长度: 256 bits (64 个十六进制字符)
+            `;
+            
+            return finalHash;
+        }
+
+        // 更新工作变量显示
+        function updateWorkingVars() {
+            const container = document.getElementById('workingVars');
+            container.innerHTML = '';
+            
+            const vars = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+            vars.forEach(v => {
+                const div = document.createElement('div');
+                div.className = 'bg-gray-50 p-3 rounded-lg';
+                div.innerHTML = `
+                    <div class="font-semibold text-gray-700">${v.toUpperCase()}</div>
+                    <div class="text-xs font-mono text-gray-600 mt-1">0x00000000</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // 执行加密
+        document.getElementById('encryptBtn').addEventListener('click', function() {
+            const inputText = document.getElementById('inputText').value.trim();
+            if (!inputText) {
+                alert('请输入要加密的文本');
+                return;
+            }
+            
+            try {
+                // 使用CryptoJS计算SHA256
+                const hash = CryptoJS.SHA256(inputText).toString();
+                
+                // 显示结果
+                document.getElementById('hashResult').innerHTML = 
+                    `<span class="text-green-600 font-mono">${hash}</span>`;
+                document.getElementById('hexResult').textContent = hash;
+                document.getElementById('binaryLength').innerHTML = 
+                    `<span class="text-blue-600">256 bits</span>`;
+                
+                // 更新计算过程
+                calculateSHA256(inputText);
+                updateWorkingVars();
+                
+            } catch (error) {
+                console.error('加密失败:', error);
+                document.getElementById('hashResult').innerHTML = 
+                    `<span class="text-red-500">加密失败: ${error.message}</span>`;
+            }
+        });
+
+        // 重置功能
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            document.getElementById('inputText').value = 'Hello, SHA256!';
+            document.getElementById('hashResult').innerHTML = 
+                '<span class="text-gray-400">点击"执行加密"查看结果</span>';
+            document.getElementById('hexResult').textContent = '';
+            document.getElementById('binaryLength').innerHTML = '<span class="text-gray-400">-</span>';
+            
+            // 重置计算过程
+            ['preprocessDetails', 'scheduleDetails', 'compressionDetails', 'finalHashDetails']
+                .forEach(id => {
+                    document.getElementById(id).textContent = '等待计算...';
+                });
+            
+            // 重置工作变量
+            updateWorkingVars();
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateWorkingVars();
+        });
+    </script>
+</body>
+</html>
